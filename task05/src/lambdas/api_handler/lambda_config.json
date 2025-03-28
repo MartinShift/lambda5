@@ -10,7 +10,9 @@
   "lambda_path": "lambdas\\api_handler",
   "dependencies": [],
   "event_sources": [],
-  "env_variables": {},
+  "env_variables": {
+    "TARGET_TABLE": "Event"
+  },
   "publish_version": true,
   "alias": "learn",
   "url_config": {},
