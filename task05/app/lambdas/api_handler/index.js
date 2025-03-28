@@ -1,23 +1,30 @@
 const AWS = require('aws-sdk');
 const dynamodb = new AWS.DynamoDB.DocumentClient();
-const { v4: uuidv4 } = require('uuid');
+const tableName = process.env.TARGET_TABLE;
 
 exports.handler = async (event, context) => {
+  console.log('Event:', JSON.stringify(event));
+  console.log('Table Name:', tableName);
+  
   try {
     const body = JSON.parse(event.body);
     const { principalId, content } = body;
 
     const item = {
-      id: uuidv4(),
+      id: AWS.util.uuid.v4(),
       principalId: principalId,
       createdAt: new Date().toISOString(),
       body: content
     };
 
+    console.log('Putting item:', JSON.stringify(item));
+
     await dynamodb.put({
-      TableName: process.env.TARGET_TABLE,
+      TableName: tableName,
       Item: item
     }).promise();
+
+    console.log('Item put successfully');
 
     return {
       statusCode: 201,
