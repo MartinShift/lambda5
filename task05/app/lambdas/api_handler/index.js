@@ -1,5 +1,5 @@
 const AWS = require('aws-sdk');
-const dynamodb = new AWS.DynamoDB.DocumentClient({ region: 'eu-west-1' }); // Explicitly set the region
+const dynamodb = new AWS.DynamoDB.DocumentClient({ region: 'eu-west-1' });
 const tableName = process.env.TARGET_TABLE;
 
 exports.handler = async (event, context) => {
@@ -8,8 +8,20 @@ exports.handler = async (event, context) => {
   console.log('AWS SDK Version:', AWS.VERSION);
   
   try {
-    const body = JSON.parse(event.body);
+    let body;
+    if (typeof event.body === 'string') {
+      body = JSON.parse(event.body);
+    } else if (typeof event === 'object') {
+      body = event;
+    } else {
+      throw new Error('Invalid event structure');
+    }
+
     const { principalId, content } = body;
+
+    if (!principalId || !content) {
+      throw new Error('Missing required fields: principalId or content');
+    }
 
     const item = {
       id: AWS.util.uuid.v4(),
