@@ -30,7 +30,7 @@ exports.handler = async (event, context) => {
       body: content
     };
 
-    console.log('Putting item:', JSON.stringify(item));
+    console.log('Item to be inserted:', JSON.stringify(item));
 
     const params = {
       TableName: tableName,
@@ -39,8 +39,13 @@ exports.handler = async (event, context) => {
 
     console.log('DynamoDB Put params:', JSON.stringify(params));
 
-    const result = await dynamodb.put(params).promise();
-    console.log('DynamoDB Put result:', JSON.stringify(result));
+    try {
+      const result = await dynamodb.put(params).promise();
+      console.log('DynamoDB Put result:', JSON.stringify(result));
+    } catch (dbError) {
+      console.error('DynamoDB Put error:', dbError);
+      throw dbError;
+    }
 
     return {
       statusCode: 201,
