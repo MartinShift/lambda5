@@ -30,7 +30,7 @@
     "deploy_stage": "api",
     "dependencies": [
       {
-        "resource_name": "api_handler",
+        "resource_name": "api_handler-4c5h",
         "resource_type": "lambda"
       }
     ],
@@ -38,7 +38,7 @@
       "/events": {
         "POST": {
           "integration_type": "lambda",
-          "lambda_name": "api_handler",
+          "lambda_name": "api_handler-4c5h",
           "authorization_type": "NONE"
         }
       }
