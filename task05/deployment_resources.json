@@ -53,6 +53,20 @@
     "write_capacity": 1,
     "global_indexes": [],
     "autoscaling": [],
+    "attributes": [
+      {
+        "name": "id",
+        "type": "S"
+      },
+      {
+        "name": "principalId",
+        "type": "N"
+      },
+      {
+        "name": "createdAt",
+        "type": "S"
+      }
+    ],
     "tags": {}
   }
 }

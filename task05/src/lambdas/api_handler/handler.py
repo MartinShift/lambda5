@@ -25,7 +25,7 @@ class ApiHandler(AbstractLambda):
         """
         try:
             body = json.loads(event['body'])
-            principal_id = body['principalId']
+            principal_id = int(body['principalId'])  # Ensure principalId is an integer
             content = body['content']
 
             event_item = {
@@ -35,6 +35,7 @@ class ApiHandler(AbstractLambda):
                 'body': content
             }
 
+            # Save to DynamoDB
             self.table.put_item(Item=event_item)
 
             _LOG.info(f"Event created: {event_item['id']}")
@@ -60,4 +61,14 @@ class ApiHandler(AbstractLambda):
 HANDLER = ApiHandler()
 
 def lambda_handler(event, context):
-    return HANDLER.lambda_handler(event=event, context=context)
+    response = HANDLER.lambda_handler(event=event, context=context)
+    # Ensure statusCode is at the top level of the response
+    if isinstance(response, dict) and 'statusCode' in response:
+        return response
+    else:
+        _LOG.error(f"Unexpected response format: {response}")
+        return {
+            'statusCode': 500,
+            'body': json.dumps({'error': 'Internal server error'}),
+            'headers': {'Content-Type': 'application/json'}
+        }
