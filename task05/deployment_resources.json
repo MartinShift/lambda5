@@ -34,7 +34,7 @@
         "resource_type": "lambda"
       }
     ],
-     "resources": {
+    "resources": {
       "/events": {
         "POST": {
           "integration_type": "lambda",

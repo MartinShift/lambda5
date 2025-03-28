@@ -1,10 +1,11 @@
 const AWS = require('aws-sdk');
-const dynamodb = new AWS.DynamoDB.DocumentClient();
+const dynamodb = new AWS.DynamoDB.DocumentClient({ region: 'eu-west-1' }); // Explicitly set the region
 const tableName = process.env.TARGET_TABLE;
 
 exports.handler = async (event, context) => {
   console.log('Event:', JSON.stringify(event));
   console.log('Table Name:', tableName);
+  console.log('AWS SDK Version:', AWS.VERSION);
   
   try {
     const body = JSON.parse(event.body);
@@ -19,12 +20,15 @@ exports.handler = async (event, context) => {
 
     console.log('Putting item:', JSON.stringify(item));
 
-    await dynamodb.put({
+    const params = {
       TableName: tableName,
       Item: item
-    }).promise();
+    };
 
-    console.log('Item put successfully');
+    console.log('DynamoDB Put params:', JSON.stringify(params));
+
+    const result = await dynamodb.put(params).promise();
+    console.log('DynamoDB Put result:', JSON.stringify(result));
 
     return {
       statusCode: 201,
@@ -37,12 +41,15 @@ exports.handler = async (event, context) => {
       }
     };
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Detailed error:', error);
+    console.error('Error stack:', error.stack);
     return {
-      statusCode: 400,
+      statusCode: 500,
       body: JSON.stringify({
-        statusCode: 400,
-        error: error.message
+        statusCode: 500,
+        error: error.message,
+        errorType: error.name,
+        errorStack: error.stack
       }),
       headers: {
         'Content-Type': 'application/json'
