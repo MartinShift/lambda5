@@ -35,7 +35,6 @@ class ApiHandler(AbstractLambda):
                 'body': content
             }
 
-            # Save to DynamoDB
             self.table.put_item(Item=event_item)
 
             _LOG.info(f"Event created: {event_item['id']}")
