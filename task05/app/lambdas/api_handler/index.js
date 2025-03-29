@@ -27,7 +27,7 @@ exports.handler = async (event, context) => {
       id: { S: AWS.util.uuid.v4() },
       principalId: { N: principalId.toString() },
       createdAt: { S: new Date().toISOString() },
-      body: { S: JSON.stringify(content) }
+      body: { M: AWS.DynamoDB.Converter.marshall(content) }  // Store as a map
     };
 
     console.log('Item to be inserted:', JSON.stringify(item));
@@ -62,7 +62,7 @@ exports.handler = async (event, context) => {
             id: item.id.S,
             principalId: parseInt(item.principalId.N),
             createdAt: item.createdAt.S,
-            body: JSON.parse(item.body.S)
+            body: AWS.DynamoDB.Converter.unmarshall(item.body.M)  // Convert back to a regular JavaScript object
           }
         }),
         headers: { 'Content-Type': 'application/json' }
