@@ -1,5 +1,5 @@
 const AWS = require('aws-sdk');
-const dynamodb = new AWS.DynamoDB.DocumentClient({ region: 'eu-west-1' });
+const dynamodb = new AWS.DynamoDB({ region: 'eu-west-1' });
 const tableName = process.env.TARGET_TABLE;
 
 exports.handler = async (event, context) => {
@@ -9,12 +9,12 @@ exports.handler = async (event, context) => {
   
   try {
     let body;
-    if (typeof event.body === 'string') {
+    if (event.body) {
       body = JSON.parse(event.body);
-    } else if (typeof event === 'object') {
-      body = event;
+    } else if (event.principalId && event.content) {
+      body = event;  // For direct invocation testing
     } else {
-      throw new Error('Invalid event structure');
+      throw new Error('Invalid event structure: missing body or principalId/content');
     }
 
     const { principalId, content } = body;
@@ -24,10 +24,10 @@ exports.handler = async (event, context) => {
     }
 
     const item = {
-      id: AWS.util.uuid.v4(),
-      principalId: principalId,
-      createdAt: new Date().toISOString(),
-      body: content
+      id: { S: AWS.util.uuid.v4() },
+      principalId: { N: principalId.toString() },
+      createdAt: { S: new Date().toISOString() },
+      body: { S: JSON.stringify(content) }
     };
 
     console.log('Item to be inserted:', JSON.stringify(item));
@@ -40,26 +40,39 @@ exports.handler = async (event, context) => {
     console.log('DynamoDB Put params:', JSON.stringify(params));
 
     try {
-      const result = await dynamodb.put(params).promise();
-      console.log('DynamoDB Put result:', JSON.stringify(result));
+      const putResult = await dynamodb.putItem(params).promise();
+      console.log('DynamoDB Put result:', JSON.stringify(putResult));
+
+      // Immediately try to get the item we just put
+      const getParams = {
+        TableName: tableName,
+        Key: { id: item.id }
+      };
+      
+      console.log('DynamoDB Get params:', JSON.stringify(getParams));
+      
+      const getResult = await dynamodb.getItem(getParams).promise();
+      console.log('DynamoDB Get result:', JSON.stringify(getResult));
+
+      return {
+        statusCode: 201,
+        body: JSON.stringify({
+          statusCode: 201,
+          event: {
+            id: item.id.S,
+            principalId: parseInt(item.principalId.N),
+            createdAt: item.createdAt.S,
+            body: JSON.parse(item.body.S)
+          }
+        }),
+        headers: { 'Content-Type': 'application/json' }
+      };
     } catch (dbError) {
-      console.error('DynamoDB Put error:', dbError);
+      console.error('DynamoDB error:', JSON.stringify(dbError));
       throw dbError;
     }
-
-    return {
-      statusCode: 201,
-      body: JSON.stringify({
-        statusCode: 201,
-        event: item
-      }),
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    };
   } catch (error) {
     console.error('Detailed error:', error);
-    console.error('Error stack:', error.stack);
     return {
       statusCode: 500,
       body: JSON.stringify({
@@ -68,9 +81,7 @@ exports.handler = async (event, context) => {
         errorType: error.name,
         errorStack: error.stack
       }),
-      headers: {
-        'Content-Type': 'application/json'
-      }
+      headers: { 'Content-Type': 'application/json' }
     };
   }
 };

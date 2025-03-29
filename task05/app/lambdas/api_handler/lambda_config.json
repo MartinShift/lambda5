@@ -11,7 +11,7 @@
   "dependencies": [],
   "event_sources": [],
   "env_variables": {
-    "TARGET_TABLE": "cmtr-420ff4d1-Events"
+    "TARGET_TABLE": "Events"
   },
   "publish_version": true,
   "alias": "learn",
